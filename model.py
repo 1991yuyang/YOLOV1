@@ -14,10 +14,10 @@ class YOLO(nn.Module):
         """
         super(YOLO, self).__init__()
         output_channels = B * 5 + C
-        self.backbone = nn.Sequential(*list(models.resnext50_32x4d(pretrained=True).children())[:-2])
+        self.backbone = nn.Sequential(*list(models.resnet18(pretrained=True).children())[:-2])
         self.head = nn.Sequential(
             nn.AdaptiveAvgPool2d(output_size=S),
-            nn.Conv2d(in_channels=2048, out_channels=128, kernel_size=1, stride=1, padding=0, bias=False),
+            nn.Conv2d(in_channels=512, out_channels=128, kernel_size=1, stride=1, padding=0, bias=False),
             nn.BatchNorm2d(num_features=128),
             nn.Dropout2d(p=0.5),
             nn.ReLU(),
