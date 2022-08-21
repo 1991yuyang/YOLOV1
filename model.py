@@ -18,7 +18,6 @@ class YOLO(nn.Module):
         self.head = nn.Sequential(
             nn.AdaptiveAvgPool2d(output_size=S),
             nn.Conv2d(in_channels=512, out_channels=output_channels, kernel_size=1, stride=1, padding=0, bias=False),
-            nn.BatchNorm2d(num_features=output_channels),
             nn.Sigmoid()
         )
 
