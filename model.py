@@ -36,4 +36,3 @@ if __name__ == "__main__":
     model = YOLO(7, 2, 20)
     out = model(d)
     print(out.size())
-

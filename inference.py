@@ -11,10 +11,10 @@ B = 2
 S = 7
 C = 1
 img_size = (640, 640)
-img_pth = r"datasets/images/train/qiushaya76.jpg"
-use_bset_model = False
-conf_thres = 0.4
-nms_iou_thres = 0.7
+img_pth = r"datasets/images/train/qiushaya6.jpg"
+use_bset_model = True
+conf_thres = 0.1
+nms_iou_thres = 0.2
 class_names = ["qiushaya"]  # 保持和voc2yolo.py中顺序一致
 colors = [[rd.randint(0, 255) for _ in range(3)] for _ in class_names]
 
@@ -161,4 +161,5 @@ if __name__ == "__main__":
     img, orig_img_size, orig_cv2_img = load_one_img(img_pth, img_size)
     model_output = inference(model, img)
     cls_x1_y1_x2_y2_conf = postprocess(model_output, conf_thres, nms_iou_thres, B, S, orig_img_size)
-    draw_box(orig_cv2_img, cls_x1_y1_x2_y2_conf, 2, 4)
+    orig_cv2_img = draw_box(orig_cv2_img, cls_x1_y1_x2_y2_conf, 2, 4)
+    cv2.imwrite("test.png", orig_cv2_img)
