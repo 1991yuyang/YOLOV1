@@ -51,7 +51,8 @@ class MySet(data.Dataset):
             A.Rotate(border_mode=cv2.BORDER_CONSTANT, value=0, p=0.5, interpolation=cv2.INTER_CUBIC),
             A.GaussNoise(mean=10, p=0.5),
             A.Cutout(num_holes=16, max_h_size=16, max_w_size=16),
-            A.GaussianBlur(p=0.5)
+            A.GaussianBlur(p=0.5),
+            A.Perspective(scale=(0.1, 0.15), p=0.5)
         ],
             bbox_params={'format': 'yolo', 'min_area': 0., 'min_visibility': 0., 'label_fields': ['category_id']}
         )
