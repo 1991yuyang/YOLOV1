@@ -5,13 +5,14 @@ import cv2
 import numpy as np
 from torchvision.ops import nms
 from numpy import random as rd
+from utils import resize
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 B = 2
 S = 7
 C = 1
 img_size = (640, 640)
-img_pth = r"datasets/images/train/qiushaya6.jpg"
+img_pth = r"datasets/images/val/qiushaya4.jpg"
 use_bset_model = True
 conf_thres = 0.1
 nms_iou_thres = 0.2
@@ -48,7 +49,7 @@ def load_one_img(img_pth, img_size):
     img = cv2.imread(img_pth)
     orig_cv2_img = img.copy()
     orig_img_size = img.shape[:2]  # (orig_h, orig_w)
-    img = cv2.resize(img, img_size, cv2.INTER_CUBIC)
+    img = resize(img, img_size)
     img = img / 255
     img = t.from_numpy(np.transpose(img, axes=[2, 0, 1])).type(t.FloatTensor).unsqueeze(0).cuda(0)
     return img, orig_img_size, orig_cv2_img

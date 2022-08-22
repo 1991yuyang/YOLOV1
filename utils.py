@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import torch as t
-
+import cv2
 
 def get_iou(bbox1, bbox2):
     xmin1, ymin1, xmax1, ymax1 = bbox1
@@ -101,6 +101,29 @@ def get_part_of_loss(label_ret, model_output, B, S, orig_image_size):
     noobj_model_output_conf_2 = t.cat(noobj_model_output_conf_2, dim=-1)
     noobj_conf_gt_2 = t.tensor(noobj_conf_gt_2).type(t.FloatTensor).to(noobj_model_output_conf_2.device)
     return obj_coord_gt, obj_class_gt, obj_conf_gt, noobj_conf_gt_1, noobj_conf_gt_2, obj_model_output_coord, obj_model_output_class, obj_model_output_conf,  noobj_model_output_conf_1, noobj_model_output_conf_2
+
+
+def resize(img, img_size):
+    orig_h, orig_w = img.shape[:2]
+    if orig_h / orig_w < 1:
+        ratio = img_size[0] / orig_w if isinstance(img_size, tuple) or isinstance(img_size, list) else img_size / orig_w
+        new_w = img_size[0] if isinstance(img_size, tuple) or isinstance(img_size, list) else img_size
+        new_h = int(ratio * orig_h)
+        left_pad = 0
+        right_pad = 0
+        bottom_pad = (new_w - new_h) // 2
+        top_pad = new_w - new_h - bottom_pad
+    else:
+        ratio = img_size[0] / orig_h if isinstance(img_size, tuple) or isinstance(img_size, list) else img_size / orig_h
+        new_h = img_size[0] if isinstance(img_size, tuple) or isinstance(img_size, list) else img_size
+        new_w = int(ratio * orig_w)
+        left_pad = (new_h - new_w) // 2
+        right_pad = new_h - new_w - left_pad
+        bottom_pad = 0
+        top_pad = 0
+    img = cv2.resize(img, (new_w, new_h), cv2.INTER_CUBIC)
+    new_img = cv2.copyMakeBorder(img, top_pad, bottom_pad, left_pad, right_pad, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+    return new_img
 
 
 if __name__ == "__main__":

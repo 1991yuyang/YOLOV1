@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import torch as t
 import albumentations as A
-
+from utils import resize
 """
 label is yolo format
 every label file is a txt file
@@ -92,6 +92,7 @@ class MySet(data.Dataset):
         if self.is_train:
             after_aug = self.augmentation(before_aug)
             img = after_aug["image"]
+            orig_img_size = t.tensor(img.shape[:2]).type(t.FloatTensor)
             # cv2.imshow("image", img)
             # cv2.waitKey()
             bboxes = after_aug["bboxes"]
@@ -105,7 +106,8 @@ class MySet(data.Dataset):
                 y_offset = (center_y % self.unit_grid_cell_ratio) / self.unit_grid_cell_ratio
                 label_ret[:, y_grid_index, x_grid_index][:5] = np.array([x_offset, y_offset, w, h, 1])
                 label_ret[:, y_grid_index, x_grid_index][5 + class_index] = 1
-        img = cv2.resize(img, self.img_size, cv2.INTER_CUBIC)
+        # img = cv2.resize(img, self.img_size, cv2.INTER_CUBIC)
+        img = resize(img, self.img_size)
         img = img / 255
         img = t.from_numpy(np.transpose(img, axes=[2, 0, 1])).type(t.FloatTensor)
         return img, label_ret, orig_img_size
@@ -116,7 +118,6 @@ class MySet(data.Dataset):
     def augmentation(self, before_aug):
         after_aug = self.augmentor(**before_aug)
         return after_aug
-
 
 
 def make_loader(S, data_root_dir, is_train, C, img_suffix, img_size, batch_size, num_workers):
