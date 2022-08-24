@@ -22,5 +22,5 @@ class Loss(nn.Module):
         noobj_conf_loss_1 = self.lamda_noobj * t.sum(t.pow(noobj_conf_gt_1 - noobj_model_output_conf_1, 2))
         noobj_conf_loss_2 = self.lamda_noobj * t.sum(t.pow(noobj_conf_gt_2 - noobj_model_output_conf_2, 2))
         noobj_conf_loss = noobj_conf_loss_1 + noobj_conf_loss_2
-        total_loss = coord_loss + obj_conf_loss + noobj_conf_loss + class_loss
+        total_loss = (coord_loss + obj_conf_loss + noobj_conf_loss + class_loss)
         return total_loss, coord_loss, obj_conf_loss, noobj_conf_loss, class_loss

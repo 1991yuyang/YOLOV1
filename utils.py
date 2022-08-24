@@ -3,6 +3,7 @@ import numpy as np
 import torch as t
 import cv2
 
+
 def get_iou(bbox1, bbox2):
     xmin1, ymin1, xmax1, ymax1 = bbox1
     xmin2, ymin2, xmax2, ymax2 = bbox2
@@ -71,6 +72,7 @@ def get_part_of_loss(label_ret, model_output, B, S, orig_image_size):
         gt_tl_y = gt_center_y_real - gt_real_h / 2
         gt_br_x = gt_center_x_real + gt_real_w / 2
         gt_br_y = gt_center_y_real + gt_real_h / 2
+        ious = []
         for b in range(B):
             center_x, center_y, w, h = temp_obj_model_output_coord[i, b * 4:(b + 1) * 4].cpu().detach().numpy().tolist()
             center_x_real = w_grid_size * w_grid_index + center_x * w_grid_size
@@ -82,6 +84,7 @@ def get_part_of_loss(label_ret, model_output, B, S, orig_image_size):
             br_x = center_x_real + real_w / 2
             br_y = center_y_real + real_h / 2
             iou = get_iou([gt_tl_x, gt_tl_y, gt_br_x, gt_br_y], [tl_x, tl_y, br_x, br_y])
+            ious.append(iou)
             if iou > max_iou:
                 max_iou = iou
                 max_b = b
@@ -91,7 +94,7 @@ def get_part_of_loss(label_ret, model_output, B, S, orig_image_size):
             if _b == max_b:
                 continue
             noobj_model_output_conf_2.append(temp_obj_model_output_conf[i:i + 1, _b])
-            noobj_conf_gt_2.append(0)
+            noobj_conf_gt_2.append(0.)
         max_ious.append(max_iou)
         obj_model_output_coord.append(max_iou_coord)
         obj_model_output_conf.append(max_iou_conf)

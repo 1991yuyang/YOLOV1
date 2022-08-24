@@ -5,17 +5,16 @@ import cv2
 import numpy as np
 from torchvision.ops import nms
 from numpy import random as rd
-from utils import resize
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 B = 2
 S = 7
 C = 1
 img_size = (640, 640)
-img_pth = r"datasets/images/val/qiushaya4.jpg"
-use_bset_model = True
-conf_thres = 0.1
-nms_iou_thres = 0.2
+img_pth = r"datasets/images/train/qiushaya6.jpg"
+use_bset_model = False
+conf_thres = 0.01
+nms_iou_thres = 0.1
 class_names = ["qiushaya"]  # 保持和voc2yolo.py中顺序一致
 colors = [[rd.randint(0, 255) for _ in range(3)] for _ in class_names]
 
@@ -49,7 +48,7 @@ def load_one_img(img_pth, img_size):
     img = cv2.imread(img_pth)
     orig_cv2_img = img.copy()
     orig_img_size = img.shape[:2]  # (orig_h, orig_w)
-    img = resize(img, img_size)
+    img = cv2.resize(img, img_size, cv2.INTER_LINEAR)
     img = img / 255
     img = t.from_numpy(np.transpose(img, axes=[2, 0, 1])).type(t.FloatTensor).unsqueeze(0).cuda(0)
     return img, orig_img_size, orig_cv2_img
@@ -67,7 +66,7 @@ def inference(model, img):
     return model_output
 
 
-def postprocess(model_output, conf_thres, nms_iou_thres, B, S, orig_img_size):
+def postprocess(model_output, conf_thres, nms_iou_thres, B, S, orig_img_size, img_size):
     """
 
     :param model_output: model inference output
@@ -91,8 +90,10 @@ def postprocess(model_output, conf_thres, nms_iou_thres, B, S, orig_img_size):
     ...
     }
     """
-    unit_w_grid_size = orig_img_size[1] / S
-    unit_h_grid_size = orig_img_size[0] / S
+    w_ratio = img_size[1] / orig_img_size[1]
+    h_ratio = img_size[0] / orig_img_size[0]
+    unit_w_grid_size = img_size[1] / S
+    unit_h_grid_size = img_size[0] / S
     conf_info = model_output[4:B * 5:5, :, :]  # (B, h_grid_indexs, w_grid_indexs)
     box_indexs, h_grid_indexs, w_grid_indexs = np.where(conf_info > conf_thres)
     obj_box_indexs = box_indexs.tolist()
@@ -109,10 +110,10 @@ def postprocess(model_output, conf_thres, nms_iou_thres, B, S, orig_img_size):
                 h_grid_index = k[0]
                 w_grid_index = k[1]
                 info = model_output[k[2] * 5:(k[2] + 1) * 5, k[0], k[1]]
-                w_box = info[2] * orig_img_size[1]
-                h_box = info[3] * orig_img_size[0]
-                x_center = w_grid_index * unit_w_grid_size + info[0] * unit_w_grid_size
-                y_center = h_grid_index * unit_h_grid_size + info[1] * unit_h_grid_size
+                w_box = info[2] * img_size[1] / w_ratio
+                h_box = info[3] * img_size[0] / h_ratio
+                x_center = (w_grid_index * unit_w_grid_size + info[0] * unit_w_grid_size) / w_ratio
+                y_center = (h_grid_index * unit_h_grid_size + info[1] * unit_h_grid_size) / h_ratio
                 x_tl = x_center - w_box / 2 if x_center - w_box / 2 > 0 else 0
                 y_tl = y_center - h_box / 2 if y_center - h_box / 2 > 0 else 0
                 x_br = x_center + w_box / 2 if x_center + w_box / 2 < orig_img_size[1] else orig_img_size[1] - 1
@@ -161,6 +162,6 @@ if __name__ == "__main__":
     model = load_model(S, B, C, True)
     img, orig_img_size, orig_cv2_img = load_one_img(img_pth, img_size)
     model_output = inference(model, img)
-    cls_x1_y1_x2_y2_conf = postprocess(model_output, conf_thres, nms_iou_thres, B, S, orig_img_size)
+    cls_x1_y1_x2_y2_conf = postprocess(model_output, conf_thres, nms_iou_thres, B, S, orig_img_size, img_size)
     orig_cv2_img = draw_box(orig_cv2_img, cls_x1_y1_x2_y2_conf, 2, 4)
     cv2.imwrite("test.png", orig_cv2_img)

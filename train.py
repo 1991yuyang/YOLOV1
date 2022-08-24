@@ -13,17 +13,16 @@ data_root_dir = r"datasets"
 B = 2
 S = 7
 C = 1
-init_lr = 0.001
-lr_de_epoch = 100
-lr_de_rate = 0.5
-epoch = 500
-batch_size = 4
+init_lr = 0.01
+final_lr = 0.0001
+epoch = 300
+batch_size = 2
 img_size = 640
 lamda_coord = 5
 lamda_noobj = 0.5
-print_step = 3
+print_step = 1
 num_workers = 4
-weight_decay = 0.0001
+weight_decay = 0.0005
 img_suffix = "jpg"
 best_valid_loss = float("inf")
 criterion = Loss(lamda_coord, lamda_noobj, B, S).cuda(device_ids[0])
@@ -93,9 +92,10 @@ def main():
     model = nn.DataParallel(module=model, device_ids=device_ids)
     model = model.cuda(device_ids[0])
     optimizer = optim.Adam(params=model.parameters(), lr=init_lr, weight_decay=weight_decay)
-    lr_sch = optim.lr_scheduler.StepLR(optimizer, lr_de_epoch, lr_de_rate)
+    lr_sch = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epoch, eta_min=final_lr)
     for e in range(epoch):
         current_epoch = e + 1
+        print("lr:%.5f" % (lr_sch.get_lr()[0],))
         train_loader = make_loader(S, data_root_dir, True, C, img_suffix, img_size, batch_size, num_workers)
         valid_loader = make_loader(S, data_root_dir, False, C, img_suffix, img_size, batch_size, num_workers)
         model = train_epoch(model, current_epoch, criterion, optimizer, train_loader)
